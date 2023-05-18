@@ -16,7 +16,7 @@ final class MainViewController: UIViewController {
     
     // MARK: Properties
     
-    private var viewModel: ViewModel
+    private let viewModel: ViewModel
     
     private var disposeBag = DisposeBag()
     
@@ -24,6 +24,11 @@ final class MainViewController: UIViewController {
         let textFiled = UITextField()
         textFiled.borderStyle = .roundedRect
         return textFiled
+    }()
+    
+    private lazy var disableSwitch: UISwitch = {
+        let disableSwitch = UISwitch()
+        return disableSwitch
     }()
     
     // MARK: Initializers
@@ -58,6 +63,7 @@ private extension MainViewController {
     
     func addSubviews() {
         view.addSubview(validateTextField)
+        view.addSubview(disableSwitch)
     }
     
     func constraintSubviews() {
@@ -65,12 +71,20 @@ private extension MainViewController {
             $0.center.equalToSuperview()
             $0.leading.trailing.equalToSuperview().inset(16)
         }
+        
+        disableSwitch.snp.makeConstraints {
+            $0.top.equalTo(validateTextField.snp.bottom).inset(-20)
+            $0.centerX.equalToSuperview()
+        }
     }
 
     func setupBinding(viewModel: MainViewModelProtocol) {
         validateTextField.rx.text.orEmpty
             .distinctUntilChanged()
             .bind(to: viewModel.input.validateText)
+            .disposed(by: disposeBag)
+        disableSwitch.rx.isOn.changed
+            .bind(to: viewModel.input.isEnableLogicSwitchState)
             .disposed(by: disposeBag)
         viewModel.output.viewState.drive(onNext: { [weak self] value in
             self?.changeState(value)
@@ -80,7 +94,7 @@ private extension MainViewController {
     func changeState(_ state: MainControllerState) {
         switch state {
         case .normal:
-            view.backgroundColor = .systemBackground
+            view.backgroundColor = .blue
         case .error:
             view.backgroundColor = .red
         }

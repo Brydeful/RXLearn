@@ -26,14 +26,16 @@ final class MainViewModel: MainViewModelProtocol {
     // MARK: Initializers
     
     init() {
-        let isChangedColor = input.validateText.map({$0.count.isMultiple(of: 2)})
-        let viewState = isChangedColor.map({ $0 ? MainControllerState.normal : MainControllerState.error })
+        let isEvenNumberCharacter = input.validateText.map({$0.count.isMultiple(of: 2)})
+        let viewState = Observable.combineLatest(isEvenNumberCharacter, input.isEnableLogicSwitchState.asObservable())
+            .map({ ($0 && $1) ? MainControllerState.normal : MainControllerState.error })
             .asDriver(onErrorJustReturn: .error)
         output = Output(viewState: viewState)
     }
     
     struct Input {
         let validateText = PublishRelay<String>()
+        let isEnableLogicSwitchState = PublishRelay<Bool>()
     }
     
     struct Output {
