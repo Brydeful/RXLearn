@@ -11,31 +11,33 @@ import RxCocoa
 
 protocol MainViewModelProtocol {
 
-    var validateText: PublishSubject<String> { get set }
-    
-    func start()
+    var input: MainViewModel.Input { get set }
+    var output: MainViewModel.Output { get set }
     
 }
 
 final class MainViewModel: MainViewModelProtocol {
     
-    typealias Controller = MainViewControllerProtocol
-    
     // MARK: Properties
     
-    var validateText: PublishSubject<String> = .init()
+    var input = Input()
+    var output: Output
     
-    private var disposeBag = DisposeBag()
+    // MARK: Initializers
     
-    weak var controller: Controller?
+    init() {
+        let isChangedColor = input.validateText.map({$0.count.isMultiple(of: 2)})
+        let viewState = isChangedColor.map({ $0 ? MainControllerState.normal : MainControllerState.error })
+            .asDriver(onErrorJustReturn: .error)
+        output = Output(viewState: viewState)
+    }
     
-    func start() {
-        validateText.subscribe(onNext: { [weak self] value in
-            guard let self else { return }
-            let state: MainControllerState = value.count.isMultiple(of: 2) ? .normal : .error
-            self.controller?.changeState(state)
-        }, onError: { [weak self] _ in self?.controller?.changeState(.error) })
-        .disposed(by: disposeBag)
+    struct Input {
+        let validateText = PublishRelay<String>()
+    }
+    
+    struct Output {
+        var viewState: Driver<MainControllerState>
     }
     
 }

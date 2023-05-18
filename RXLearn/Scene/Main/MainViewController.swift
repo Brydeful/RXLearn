@@ -10,19 +10,13 @@ import SnapKit
 import RxSwift
 import RxCocoa
 
-protocol MainViewControllerProtocol: AnyObject {
-    
-    func changeState(_ state: MainControllerState)
-    
-}
-
 final class MainViewController: UIViewController {
     
     typealias ViewModel = MainViewModelProtocol
     
     // MARK: Properties
     
-    var viewModel: ViewModel?
+    private var viewModel: ViewModel
     
     private var disposeBag = DisposeBag()
     
@@ -32,12 +26,21 @@ final class MainViewController: UIViewController {
         return textFiled
     }()
     
+    // MARK: Initializers
+    
+    init(viewModel: ViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { return nil }
+    
     // MARK: Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
         commonInit()
-        viewModel?.start()
     }
     
 }
@@ -49,7 +52,7 @@ private extension MainViewController {
     func commonInit() {
         addSubviews()
         constraintSubviews()
-        setupBinding()
+        setupBinding(viewModel: viewModel)
         view.backgroundColor = .systemBackground
     }
     
@@ -64,19 +67,15 @@ private extension MainViewController {
         }
     }
 
-    func setupBinding() {
-        guard let viewModel else { return }
+    func setupBinding(viewModel: MainViewModelProtocol) {
         validateTextField.rx.text.orEmpty
             .distinctUntilChanged()
-            .bind(to: viewModel.validateText)
+            .bind(to: viewModel.input.validateText)
             .disposed(by: disposeBag)
+        viewModel.output.viewState.drive(onNext: { [weak self] value in
+            self?.changeState(value)
+        }).disposed(by: disposeBag)
     }
-    
-}
-
-// MARK: - MainViewControllerProtocol
-
-extension MainViewController: MainViewControllerProtocol {
     
     func changeState(_ state: MainControllerState) {
         switch state {
@@ -86,5 +85,5 @@ extension MainViewController: MainViewControllerProtocol {
             view.backgroundColor = .red
         }
     }
-    
+
 }

@@ -11,9 +11,7 @@ final class MainSceneFactory {
     
     static func buildModule() -> UIViewController {
         let viewModel = MainViewModel()
-        let controller = MainViewController()
-        controller.viewModel = viewModel
-        viewModel.controller = controller
+        let controller = MainViewController(viewModel: viewModel)
         return controller
     }
     
