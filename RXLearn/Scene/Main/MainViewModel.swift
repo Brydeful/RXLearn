@@ -26,10 +26,9 @@ final class MainViewModel: MainViewModelProtocol {
     // MARK: Initializers
     
     init() {
-        let isEvenNumberCharacter = input.validateText.map({$0.count.isMultiple(of: 2)})
-        let viewState = Observable.combineLatest(isEvenNumberCharacter, input.isEnableLogicSwitchState.asObservable())
-            .map({ ($0 && $1) ? MainControllerState.normal : MainControllerState.error })
-            .asDriver(onErrorJustReturn: .error)
+        let viewState = Observable.combineLatest(input.isEnableLogicSwitchState.asObservable(), input.validateText) { isEnabled, text in
+            (isEnabled && text.count.isMultiple(of: 2)) ? MainControllerState.normal : MainControllerState.error
+        }.asDriver(onErrorJustReturn: .error)
         output = Output(viewState: viewState)
     }
     
